@@ -3,7 +3,6 @@ package org.example;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -14,6 +13,7 @@ import java.util.Date;
 public class Main {
 
     public JLabel status;
+    public DefaultListModel<String> recentFiles = new DefaultListModel<>();
 
     public static void main(String[] args) {
         Main m = new Main();
@@ -21,6 +21,7 @@ public class Main {
     }
 
     private void run() {
+
         //--- CREATE GUI ---
 
         JFrame frame = new JFrame("JavaVFV");
@@ -68,14 +69,35 @@ public class Main {
         });
         topPanel.add(clearButton);
 
-        //--- CREATE CLEAR BUTTON END
+        //--- CREATE RECENTLY OPENED FILES LIST ---
+
+        JPanel recentFilesPanel = new JPanel();
+        recentFilesPanel.setLayout(new BoxLayout(recentFilesPanel, BoxLayout.Y_AXIS));
+
+        JLabel recentFilesLabel = new JLabel("Recently Opened Files:");
+        recentFilesLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JList<String> openedFilesList = new JList<>(recentFiles);
+        JScrollPane listScrollPane = new JScrollPane(openedFilesList);
+        listScrollPane.setPreferredSize(new Dimension(200, 400));
+        openedFilesList.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        recentFilesPanel.add(recentFilesLabel);
+        recentFilesPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        recentFilesPanel.add(listScrollPane);
+
+        frame.add(recentFilesPanel, BorderLayout.EAST);
+
+        //--- CREATE RECENTLY OPENED FILES LIST END ---
+
+        //--- CREATE CLEAR BUTTON END ---
 
         frame.add(topPanel, BorderLayout.NORTH);
         frame.add(scrollPane, BorderLayout.CENTER);
 
         frame.setVisible(true);
 
-        //--- CREATE TOP CONTROLLER PANEL END ---
+        //--- CREATE PANELS END ---
     }
 
     private void changeStatusText(String newText) {
@@ -84,7 +106,7 @@ public class Main {
 
     private JButton getJButton(JFrame frame, JTextArea textArea) {
         JButton openButton = new JButton("Open File");
-        openButton.addActionListener((ActionEvent e) -> {
+        openButton.addActionListener((ActionEvent _) -> {
             JFileChooser fileChooser = new JFileChooser();
             int result = fileChooser.showOpenDialog(frame);
 
@@ -96,6 +118,8 @@ public class Main {
                     SimpleDateFormat sdf = new SimpleDateFormat();
                     String formattedDate = sdf.format(new Date(selectedFile.lastModified()));
                     changeStatusText("File loaded: " + selectedFile.getName() + "      File Size: " + getFileSize(selectedFile) + "      Last Modified: " + formattedDate);
+
+                    recentFiles.add(recentFiles.size(), selectedFile.getName());
 
                     String line;
                     while ((line = reader.readLine()) != null) {
@@ -118,14 +142,14 @@ public class Main {
 
     public String getFileSize(File f) {
         long s = f.length();
-        if (s < 1024) { // If file is less than 1KB
-            return s + " B";
-        } else if (s > 1024 && s < (1048576)) { // If file is more than 1KB and less than 1MB
-            return (double) (s / 1024) + "KB";
-        } else if (s > 1048576 && s < 1073741824) { // If file is more than 1MB and less than 1GB
-            return (double) (s / 1048576) + "MB";
+        if (s <= 1024) { // If file is less than 1KB
+            return (double) s + " B";
+        } else if (s <= (1048576)) { // If file is more than 1KB and less than 1MB
+            return (double) (s / 1024) + " KB";
+        } else if (s <= 1073741824) { // If file is more than 1MB and less than 1GB
+            return (double) (s / 1048576) + " MB";
         } else { // If file is more than 1GB
-            return (double) (s / 1073741824) + "GB";
+            return (double) (s / 1073741824) + " GB";
         }
     }
 

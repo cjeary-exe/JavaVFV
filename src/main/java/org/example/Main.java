@@ -8,6 +8,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class Main {
 
@@ -91,7 +93,9 @@ public class Main {
                 try (BufferedReader reader = new BufferedReader(new FileReader(selectedFile))) {
                     textArea.setText("");
 
-                    changeStatusText("File loaded: " + selectedFile.getName());
+                    SimpleDateFormat sdf = new SimpleDateFormat();
+                    String formattedDate = sdf.format(new Date(selectedFile.lastModified()));
+                    changeStatusText("File loaded: " + selectedFile.getName() + "      File Size: " + getFileSize(selectedFile) + "      Last Modified: " + formattedDate);
 
                     String line;
                     while ((line = reader.readLine()) != null) {
@@ -110,6 +114,19 @@ public class Main {
 
         });
         return openButton;
+    }
+
+    public String getFileSize(File f) {
+        long s = f.length();
+        if (s < 1024) { // If file is less than 1KB
+            return s + " B";
+        } else if (s > 1024 && s < (1048576)) { // If file is more than 1KB and less than 1MB
+            return (double) (s / 1024) + "KB";
+        } else if (s > 1048576 && s < 1073741824) { // If file is more than 1MB and less than 1GB
+            return (double) (s / 1048576) + "MB";
+        } else { // If file is more than 1GB
+            return (double) (s / 1073741824) + "GB";
+        }
     }
 
 

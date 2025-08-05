@@ -1,16 +1,19 @@
 package org.example;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class Main {
     public static void main(String[] args) {
+        //--- CREATE GUI ---
+
         JFrame frame = new JFrame("JavaVFV");
-        frame.setSize(400, 300);
+
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(800, 600);
 
-        JLabel label = new JLabel("JavaVFV");
-        frame.add(label);
-
-        frame.setVisible(true);
+        //--- CREATE GUI END ---
     }
 }

@@ -3,17 +3,23 @@ package org.example;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class Main {
 
     public JLabel status;
     public DefaultListModel<String> recentFiles = new DefaultListModel<>();
+    public List<File> recents = new ArrayList<>();
 
     public static void main(String[] args) {
         Main m = new Main();
@@ -82,6 +88,18 @@ public class Main {
         listScrollPane.setPreferredSize(new Dimension(200, 400));
         openedFilesList.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+        openedFilesList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    // User has double-clicked
+                    int index = openedFilesList.locationToIndex(e.getPoint());
+                    File toOpen = recents.get(index);
+                    openFile(frame, textArea, toOpen);
+                }
+            }
+        });
+
         recentFilesPanel.add(recentFilesLabel);
         recentFilesPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         recentFilesPanel.add(listScrollPane);
@@ -104,41 +122,56 @@ public class Main {
         status.setText(newText);
     }
 
-    private JButton getJButton(JFrame frame, JTextArea textArea) {
-        JButton openButton = new JButton("Open File");
-        openButton.addActionListener((ActionEvent _) -> {
+    private void openFile(JFrame frame, JTextArea textArea, File fileToOpen) {
+        File selectedFile = fileToOpen;
+
+        if (selectedFile == null) {
             JFileChooser fileChooser = new JFileChooser();
             int result = fileChooser.showOpenDialog(frame);
 
             if (result == JFileChooser.APPROVE_OPTION) {
-                File selectedFile = fileChooser.getSelectedFile();
-                try (BufferedReader reader = new BufferedReader(new FileReader(selectedFile))) {
-                    textArea.setText("");
-
-                    SimpleDateFormat sdf = new SimpleDateFormat();
-                    String formattedDate = sdf.format(new Date(selectedFile.lastModified()));
-                    changeStatusText("File loaded: " + selectedFile.getName() + "      File Size: " + getFileSize(selectedFile) + "      Last Modified: " + formattedDate);
-
-                    recentFiles.add(recentFiles.size(), selectedFile.getName());
-
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        textArea.append(line + "\n");
-                    }
-                } catch (IOException ex) {
-                    JOptionPane.showMessageDialog(frame,
-                            "Error reading file: " + ex.getMessage(),
-                            "Error",
-                            JOptionPane.ERROR_MESSAGE);
-                    changeStatusText("Error while opening file: " + ex.getMessage());
-                }
+                selectedFile = fileChooser.getSelectedFile();
             } else {
                 changeStatusText("Open file cancelled");
+                return;
+            }
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(selectedFile))) {
+            textArea.setText("");
+
+            SimpleDateFormat sdf = new SimpleDateFormat();
+            String formattedDate = sdf.format(new Date(selectedFile.lastModified()));
+            changeStatusText("File loaded: " + selectedFile.getName() + "      File Size: " + getFileSize(selectedFile) + "      Last Modified: " + formattedDate);
+
+            if (recents.contains(selectedFile)) {
+                int i = recents.indexOf(selectedFile);
+                recents.remove(i);
+                recentFiles.remove(i);
             }
 
-        });
+            recents.add(selectedFile);
+            recentFiles.add(recentFiles.size(), selectedFile.getName());
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                textArea.append(line + "\n");
+            }
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(frame,
+                    "Error reading file: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            changeStatusText("Error while opening file: " + ex.getMessage());
+        }
+    }
+
+    private JButton getJButton(JFrame frame, JTextArea textArea) {
+        JButton openButton = new JButton("Open File");
+        openButton.addActionListener((ActionEvent _) -> openFile(frame, textArea, null));
         return openButton;
     }
+
 
     public String getFileSize(File f) {
         long s = f.length();

@@ -3,13 +3,22 @@ package org.example;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
 public class Main {
+
+    public JLabel status;
+
     public static void main(String[] args) {
+        Main m = new Main();
+        m.run();
+    }
+
+    private void run() {
         //--- CREATE GUI ---
 
         JFrame frame = new JFrame("JavaVFV");
@@ -28,8 +37,50 @@ public class Main {
 
         //--- CREATE TEXT AREA END ---
 
-        //--- CREATE OPEN FILE BUTTON ---
+        //--- CREATE OPEN FILE BUTTON AND STATUS TEXT ---
 
+        status = new JLabel("Status: ");
+
+        frame.add(status, BorderLayout.SOUTH);
+
+        changeStatusText("Select a file to open.");
+
+        JButton openButton = getJButton(frame, textArea);
+
+        //--- CREATE OPEN FILE BUTTON AND STATUS TEXT END ---
+
+        //--- CREATE PANELS ---
+
+        JPanel topPanel = new JPanel();
+        topPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+        topPanel.add(openButton);
+
+        //--- CREATE PANELS END ---
+
+        //--- CREATE CLEAR BUTTON ---
+
+        JButton clearButton = new JButton("Clear");
+        clearButton.addActionListener((ActionEvent _) -> {
+            textArea.setText("");
+            changeStatusText("Viewer cleared");
+        });
+        topPanel.add(clearButton);
+
+        //--- CREATE CLEAR BUTTON END
+
+        frame.add(topPanel, BorderLayout.NORTH);
+        frame.add(scrollPane, BorderLayout.CENTER);
+
+        frame.setVisible(true);
+
+        //--- CREATE TOP CONTROLLER PANEL END ---
+    }
+
+    private void changeStatusText(String newText) {
+        status.setText(newText);
+    }
+
+    private JButton getJButton(JFrame frame, JTextArea textArea) {
         JButton openButton = new JButton("Open File");
         openButton.addActionListener((ActionEvent e) -> {
             JFileChooser fileChooser = new JFileChooser();
@@ -39,6 +90,9 @@ public class Main {
                 File selectedFile = fileChooser.getSelectedFile();
                 try (BufferedReader reader = new BufferedReader(new FileReader(selectedFile))) {
                     textArea.setText("");
+
+                    changeStatusText("File loaded: " + selectedFile.getName());
+
                     String line;
                     while ((line = reader.readLine()) != null) {
                         textArea.append(line + "\n");
@@ -48,20 +102,15 @@ public class Main {
                             "Error reading file: " + ex.getMessage(),
                             "Error",
                             JOptionPane.ERROR_MESSAGE);
+                    changeStatusText("Error while opening file: " + ex.getMessage());
                 }
+            } else {
+                changeStatusText("Open file cancelled");
             }
 
         });
-
-        //--- CREATE TOP CONTROLLER PANEL ---
-
-        JPanel topPanel = new JPanel();
-        topPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-        topPanel.add(openButton);
-
-        frame.add(topPanel, BorderLayout.NORTH);
-        frame.add(scrollPane, BorderLayout.CENTER);
-
-        frame.setVisible(true);
+        return openButton;
     }
+
+
 }
